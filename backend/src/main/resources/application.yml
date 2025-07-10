@@ -1,0 +1,12 @@
+server:
+  port: 8070
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/nearbydb
+    username: nearby
+    password: nearby
+  jpa:
+    hibernate:
+      ddl-auto: update
+google:
+  api-key: ${GOOGLE_API_KEY}
