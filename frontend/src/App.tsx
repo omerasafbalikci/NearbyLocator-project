@@ -5,6 +5,7 @@ import MapView from "./components/MapView";
 import PlaceList from "./components/PlaceList";
 import { fetchNearby } from "./api/places";
 import type { Place } from "./types/place";
+import 'leaflet/dist/leaflet.css';
 
 export default function App() {
   const [places, setPlaces] = useState<Place[]>([]);

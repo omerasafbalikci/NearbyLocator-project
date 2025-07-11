@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  # ---------- Postgres ----------
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: nearbydb
+      POSTGRES_USER: nearby
+      POSTGRES_PASSWORD: nearby
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U nearby -d nearbydb" ]   # ← DB adını ekledik
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Spring Boot Backend ----------
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/nearbydb
+      SPRING_DATASOURCE_USERNAME: nearby
+      SPRING_DATASOURCE_PASSWORD: nearby
+      LOCATIONIQ_KEY: pk.2c5852e18fa4920338724e4639a3d040   # <–– kendi tokenını yaz
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8070:8070"
+
+  # ---------- React Frontend ----------
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_BACKEND_URL: http://localhost:8070/api/v1
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:

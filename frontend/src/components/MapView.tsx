@@ -1,60 +1,62 @@
-import {
-  GoogleMap,
-  Marker,
-  InfoWindow,
-  useJsApiLoader,
-} from "@react-google-maps/api";
-import { useState } from "react";
-import type { Place } from "../types/place";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import type { Place } from '../types/place';
+import { useEffect } from 'react';
+
+/* OpenStreetMap marker ikonu ayarı (Leaflet varsayılanı CDN’den çekiyor) */
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl:
+    'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 interface Props {
   center: { lat: number; lng: number };
   places: Place[];
 }
 
+/* Harita ortasını arama sonrası güncellemek için küçük yardımcı */
+function Fly({ center }: { center: { lat: number; lng: number } }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo([center.lat, center.lng], 14);
+  }, [center]);
+  return null;
+}
+
 export default function MapView({ center, places }: Props) {
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY as string,
-  });
-
-  const [active, setActive] = useState<Place | null>(null);
-
-  if (!isLoaded) return <p>Harita yükleniyor…</p>;
-
-  return isLoaded ? (
-    <GoogleMap
-      mapContainerClassName="rounded-lg border shadow-sm h-[70vh] dark:border-gray-700"
+  return (
+    <MapContainer
+      center={[center.lat, center.lng]}
       zoom={14}
-      center={center}
-      onClick={() => setActive(null)}
+      scrollWheelZoom
+      style={{ height: '70vh', width: '100%' }}
+      className="rounded-lg border shadow-sm dark:border-gray-700"
     >
-      {places.map((p) => (
-        <Marker
-          key={p.placeId}
-          position={{ lat: p.lat, lng: p.lng }}
-          onClick={() => setActive(p)}
-          icon={p.iconUrl || undefined}
-        />
-      ))}
+      {/* Ücretsiz OSM karo sunucusu */}
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
 
-      {active && (
-        <InfoWindow
-          position={{ lat: active.lat, lng: active.lng }}
-          onCloseClick={() => setActive(null)}
-        >
-          <div style={{ maxWidth: 200 }}>
-            <strong>{active.name}</strong>
+      <Fly center={center} />
+
+      {places.map((p) => (
+        <Marker key={p.placeId} position={[p.lat, p.lng]}>
+          <Popup>
+            <strong>{p.name}</strong>
             <br />
-            {active.address}
-            {active.rating && (
+            {p.address}
+            {p.rating && (
               <>
-                <br />⭐ {active.rating}
+                <br />⭐ {p.rating}
               </>
             )}
-          </div>
-        </InfoWindow>
-      )}
-    </GoogleMap>
-  ) : null;
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
 }

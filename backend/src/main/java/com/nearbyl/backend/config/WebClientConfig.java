@@ -2,17 +2,15 @@ package com.nearbyl.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class WebClientConfig {
 
     @Bean
-    public WebClient googleClient() {
+    public WebClient locationIqClient() {
         return WebClient.builder()
-                .baseUrl("https://maps.googleapis.com")
-                .defaultHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .baseUrl("https://api.locationiq.com")
                 .build();
     }
 }
