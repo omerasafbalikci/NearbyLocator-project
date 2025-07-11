@@ -22,9 +22,9 @@ export default function MapView({ center, places }: Props) {
 
   if (!isLoaded) return <p>Harita yükleniyor…</p>;
 
-  return (
+  return isLoaded ? (
     <GoogleMap
-      mapContainerStyle={{ width: "100%", height: "70vh" }}
+      mapContainerClassName="rounded-lg border shadow-sm h-[70vh] dark:border-gray-700"
       zoom={14}
       center={center}
       onClick={() => setActive(null)}
@@ -56,5 +56,5 @@ export default function MapView({ center, places }: Props) {
         </InfoWindow>
       )}
     </GoogleMap>
-  );
+  ) : null;
 }

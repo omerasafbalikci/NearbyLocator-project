@@ -1,32 +1,27 @@
 import { useState } from "react";
-import { fetchNearby } from "./api/places";
+import Header from "./components/Header";
+import SearchForm from "./components/SearchForm";
 import MapView from "./components/MapView";
+import PlaceList from "./components/PlaceList";
+import { fetchNearby } from "./api/places";
 import type { Place } from "./types/place";
-import "./index.css"; // stil dosyan varsa
 
 export default function App() {
-  const [form, setForm] = useState({
-    lat: "",
-    lng: "",
-    radius: 500,
-  });
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = async (lat: number, lng: number, radius: number) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchNearby(
-        Number(form.lat),
-        Number(form.lng),
-        Number(form.radius)
-      );
+      const data = await fetchNearby(lat, lng, radius);
+      setCoords({ lat, lng });
       setPlaces(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Yerler alınamadı.");
     } finally {
       setLoading(false);
@@ -34,48 +29,29 @@ export default function App() {
   };
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "1rem" }}>
-      <h1>Yakındaki Yerler</h1>
+    <div className="min-h-screen bg-gray-50 px-4 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <div className="mx-auto max-w-6xl">
+        <Header />
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8 }}>
-        <input
-          type="number"
-          step="any"
-          placeholder="Enlem"
-          required
-          value={form.lat}
-          onChange={(e) => setForm({ ...form, lat: e.target.value })}
-        />
-        <input
-          type="number"
-          step="any"
-          placeholder="Boylam"
-          required
-          value={form.lng}
-          onChange={(e) => setForm({ ...form, lng: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Mesafe (m)"
-          min={1}
-          value={form.radius}
-          onChange={(e) =>
-            setForm({ ...form, radius: Number(e.target.value) })
-          }
-        />
-        <button type="submit" disabled={loading}>
-          {loading ? "Aranıyor…" : "Ara"}
-        </button>
-      </form>
+        <section className="my-6">
+          <SearchForm onSubmit={handleSearch} loading={loading} />
+          {error && <p className="mt-2 text-red-600">{error}</p>}
+        </section>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      {form.lat && form.lng && (
-        <MapView
-          center={{ lat: Number(form.lat), lng: Number(form.lng) }}
-          places={places}
-        />
-      )}
+        {coords && (
+          <section className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <MapView center={coords} places={places} />
+            </div>
+            <div>
+              <h2 className="mb-2 text-lg font-semibold">
+                Sonuçlar ({places.length})
+              </h2>
+              <PlaceList places={places} />
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
